@@ -1,49 +1,32 @@
 const express = require('express');
 const cors = require('cors');
 const fs = require('fs');
-const YTDlpWrap = require('yt-dlp-wrap').default;
+const { execSync } = require('child_process');
 
 const app = express();
 app.use(cors());
 
-// Записать cookies из env переменной в файл при старте
+// Записать cookies из env в файл
 if (process.env.COOKIES_CONTENT) {
   fs.writeFileSync('./cookies.txt', process.env.COOKIES_CONTENT);
-  console.log('Cookies written from environment variable');
+  console.log('Cookies written successfully');
 }
 
-const ytDlp = new YTDlpWrap('./yt-dlp');
-
-// GET /audio?videoId=xxxx
 app.get('/audio', async (req, res) => {
   const { videoId } = req.query;
   if (!videoId) return res.status(400).json({ error: 'videoId required' });
 
   try {
-    const args = ['--dump-json', '-f', 'bestaudio'];
+    const cookiesFlag = fs.existsSync('./cookies.txt')
+      ? '--cookies ./cookies.txt'
+      : '';
 
-    // Использовать cookies если есть
-    if (fs.existsSync('./cookies.txt')) {
-      args.push('--cookies', './cookies.txt');
-    }
+    const result = execSync(
+      `./yt-dlp ${cookiesFlag} -f bestaudio -g "https://www.youtube.com/watch?v=${videoId}"`,
+      { encoding: 'utf8', timeout: 30000 }
+    ).trim();
 
-    const info = await ytDlp.getVideoInfo(
-      `https://www.youtube.com/watch?v=${videoId}`,
-      args
-    );
-
-    // Найти лучший аудио формат
-    const format = info.formats
-      ? info.formats
-          .filter((f) => f.acodec !== 'none' && f.vcodec === 'none')
-          .sort((a, b) => (b.abr || 0) - (a.abr || 0))[0]
-      : info;
-
-    if (!format || !format.url) {
-      return res.status(404).json({ error: 'No audio format found' });
-    }
-
-    res.json({ url: format.url, mimeType: format.ext || 'm4a' });
+    res.json({ url: result, mimeType: 'm4a' });
   } catch (e) {
     res.status(500).json({ error: 'Failed', details: e.message });
   }
