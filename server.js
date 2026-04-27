@@ -21,8 +21,12 @@ app.get('/audio', async (req, res) => {
       : '';
 
     const result = execSync(
-      `./yt-dlp ${cookiesFlag} -f bestaudio -g "https://www.youtube.com/watch?v=${videoId}"`,
-      { encoding: 'utf8', timeout: 30000 }
+      `./yt-dlp ${cookiesFlag} --js-runtimes node -f bestaudio -g "https://www.youtube.com/watch?v=${videoId}"`,
+      { 
+        encoding: 'utf8', 
+        timeout: 30000,
+        env: { ...process.env, PATH: process.env.PATH + ':/usr/local/bin:/usr/bin' }
+      }
     ).trim();
 
     res.json({ url: result, mimeType: 'm4a' });
