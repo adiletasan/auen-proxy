@@ -5,7 +5,7 @@ const app = express();
 
 app.use(cors());
 
-const ytDlp = new YTDlpWrap('./yt-dlp.exe');
+const ytDlp = new YTDlpWrap('./yt-dlp');
 
 app.get('/audio', async (req, res) => {
   const { videoId } = req.query;
