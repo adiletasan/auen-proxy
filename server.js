@@ -21,7 +21,7 @@ app.get('/audio', async (req, res) => {
       : '';
 
     const result = execSync(
-      `./yt-dlp ${cookiesFlag} --extractor-args "youtube:player_client=android" -f bestaudio -g "https://www.youtube.com/watch?v=${videoId}"`,
+      `./yt-dlp ${cookiesFlag} -f bestaudio -g "https://www.youtube.com/watch?v=${videoId}"`,
       { encoding: 'utf8', timeout: 30000 }
     ).trim();
 
